@@ -28,9 +28,8 @@ app.use((req, res, next) => {
   next()
 })
 
-// 导入并注册用户路由模块
-const adminRouter = require('./router/admin')
 
+const adminRouter = require('./router/admin')
 app.use('/admin', adminRouter)
 
 // 错误处理

@@ -5,6 +5,7 @@ const errorHandler = (err, req, res, next) => {
     console.log(req.url)
     return res.output(err)
   }
+  console.log(err)
   res.output(err)
   next()
 }

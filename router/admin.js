@@ -1,4 +1,5 @@
 const express = require('express')
+const path = require('path')
 const router = express.Router()
 
 // 导入用户路由处理函数模块
@@ -8,6 +9,11 @@ const adminHandler = require('../router_handler/admin')
 const expressJoi = require('@escook/express-joi')
 // 2. 导入需要的验证规则对象
 const { reg_login_schema } = require('../schema/admin')
+
+
+// 注册
+router.get('/registerPage', adminHandler.registerPage)
+router.post('/register', adminHandler.register)
 
 // 登录
 // 3. 在用户登录的路由中，声明局部中间件，对当前请求中携带的数据进行验证
