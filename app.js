@@ -17,7 +17,7 @@ app.use(express.json({limit:'1024mb'}));
 
 // 集中错误抛出
 app.use((req, res, next) => {
-  res.output = (err, status = 1, data) => {
+  res.output = (err, status = 0, data) => {
     if (err)
     res.send({
       status,

@@ -19,6 +19,6 @@ router.post('/register', adminHandler.register)
 // 3. 在用户登录的路由中，声明局部中间件，对当前请求中携带的数据进行验证
 // 3.1 数据验证通过后，会把这次请求流转给后面的路由处理函数
 // 3.2 数据验证失败后，终止后续代码的执行，并抛出一个全局的 Error 错误
-router.post('/login', expressJoi(reg_login_schema), adminHandler.login)
+router.post('/login', adminHandler.login)
 
 module.exports = router
