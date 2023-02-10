@@ -7,7 +7,7 @@ require('./db/index')
 // 同步数据库
 require('./db/sync')
 
-const logger = require('./utils/log')
+const { logger } = require('./utils/utils')
 
 // 创建 express 的服务器实例 
 const app = express()
@@ -21,16 +21,20 @@ app.use(express.json({ limit: '1024mb' }));
 
 // 通用配置
 app.use((req, res, next) => {
-  logger('info', req.ip + '  ' + req.url, 'login')
+  logger('info', req.ip + '  ' + req.url, '访问路由')
   res.header("Content-Type", "application/json; charset=utf-8")
-  res.output = (err, status = 0, data) => {
-    if (err) {
-      res.send({
-        status,
-        message: err instanceof Error ? err.message : err,
-        data
-      })
-    }
+  res.errput = (err, status = 0, data) => {
+    res.send({
+      status,
+      message: err instanceof Error ? err.message : err,
+      data
+    })
+  }
+  res.okput = (data, status = 1) => {
+    res.send({
+      status,
+      data
+    })
   }
   next()
 })

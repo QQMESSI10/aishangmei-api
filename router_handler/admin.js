@@ -1,8 +1,7 @@
 const path = require('path')
-const bcryptjs = require('bcryptjs')
 const bcrypt = require('bcryptjs')
 
-const utils = require('../utils/utils')
+const { logger, seqError } = require('../utils/utils')
 
 const Admin = require('../db/model/admin')
 
@@ -12,28 +11,45 @@ const Admin = require('../db/model/admin')
 
 // 注册页面
 exports.registerPage = (req, res) => {
+  res.header("Content-Type", "text/html; charset=utf-8")
   res.sendFile(path.join(__dirname, '../router/page/register.html'))
 }
 // 注册
 exports.register = (req, res) => {
   Admin.count().then(count => {
     if (count > 0) {
-      res.end('已存在管理账号，注册失败，请联系管理员处理！')
+      res.end('已存在管理账号，无法进行注册，请联系管理员处理！')
     } else {
       const account = req.body.account
-      const password = bcryptjs.hashSync(req.body.password)
+      const password = bcrypt.hashSync(req.body.password)
       Admin.create({
         account,
         password
       }).then(createRes => {
         res.end('注册成功！')
-      }).catch(createErr => utils.seqError(createErr, res))
+      }).catch(createErr => seqError(createErr, res))
     }
-  }).catch(err => utils.seqError(err, res))
+  }).catch(err => seqError(err, res))
 }
 
 // 登录请求的处理函数
 exports.login = (req, res) => {
-  console.log(req)
-  res.send('login OK')
+  Admin.findAll({
+    where: {
+      account: req.body.account,
+    }
+  }).then(findRes => {
+    if (findRes.length != 1) {
+      logger('info', req.body.account, '登录异常')
+      res.errput('账号输入错误，请重新输入')
+    } else {
+      logger('info', req.body.password, '登录密码')
+      const compareResult = bcrypt.compareSync(findRes[0].password, req.body.password)
+      if (compareResult) {
+        res.okput('登录成功！')
+      } else {
+        res.errput('密码输入错误，请重新输入')
+      }
+    }
+  }).catch(findErr => seqError(findErr, res))
 }
