@@ -21,7 +21,7 @@ exports.register = (req, res) => {
       res.end('已存在管理账号，无法进行注册，请联系管理员处理！')
     } else {
       const account = req.body.account
-      const password = bcrypt.hashSync(req.body.password, 10)
+      const password = bcrypt.hashSync(req.body.password)
       Admin.create({
         account,
         password
@@ -43,7 +43,11 @@ exports.login = (req, res) => {
       logger('info', req.body.account, '登录异常')
       res.errput('账号输入错误，请重新输入')
     } else {
-      const compareResult = bcrypt.compareSync(findRes[0].password, req.body.password)
+      console.log(findRes[0].password == req.body.password);
+      const compareResult = bcrypt.compareSync(
+        req.body.password,
+        findRes[0].password
+      );
       console.log(compareResult)
       if (compareResult) {
         res.okput('登录成功！')
