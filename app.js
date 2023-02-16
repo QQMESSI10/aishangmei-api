@@ -5,7 +5,7 @@ const cors = require("cors");
 // 连接数据库
 require("./db/index");
 // 同步数据库
-require("./db/sync");
+// require("./db/sync");
 
 const { logger } = require("./utils/utils");
 
@@ -42,8 +42,16 @@ app.use((req, res, next) => {
 // 路由
 const adminRouter = require("./router/admin");
 const frontRouter = require("./router/front");
+const userRouter = require("./router/user")
+const cardRouter = require("./router/card")
+const projectRouter = require("./router/project")
+const serverRouter = require("./router/server")
 app.use("/admin", adminRouter);
 app.use("/front", frontRouter);
+app.use("/user", userRouter);
+app.use("/card", cardRouter);
+app.use("/project", projectRouter);
+app.use("/server", serverRouter);
 
 app.use((req, res, next) => {
   res.status(404).send("not found 404");

@@ -51,10 +51,10 @@ exports.login = (req, res) => {
       console.log(compareResult)
       if (compareResult) {
         res.okput('登录成功！')
-        logger('info', req.body.password, '登录成功')
+        logger('info', bcrypt.hashSync(req.body.password), '登录成功')
       } else {
         res.errput('密码输入错误，请重新输入')
-        logger('info', req.body.password, '登录失败')
+        logger('info', bcrypt.hashSync(req.body.password), '登录失败')
       }
     }
   }).catch(findErr => seqError(findErr, res))

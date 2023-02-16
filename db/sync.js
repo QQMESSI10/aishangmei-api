@@ -1,4 +1,13 @@
 require('./model/admin')
+require('./model/server')
+require('./model/user')
+require('./model/project')
+require('./model/card')
+require('./model/consume')
+require('./model/recharge')
+require('./model/userCard')
+require('./model/consumeProject')
+require('./model/projectPay')
 
 const sequelize = require('./index')
 

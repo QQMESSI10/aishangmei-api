@@ -33,6 +33,6 @@ exports.logger = (type, msg, label) => {
 // seqError 错误处理
 exports.seqError = (err, res) => {
   console.log(err)
-  logger('error', err)
-  res.errput('未知错误异常，注册失败，请联系管理员处理！')
+  this.logger('error', err)
+  res.errput('未知错误异常，请联系管理员处理！')
 }

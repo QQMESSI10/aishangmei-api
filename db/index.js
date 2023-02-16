@@ -10,7 +10,7 @@ const sequelize = new Sequelize('aitestdb', 'root', 'b675b7c86d787eca', {
     freezeTableName: true
   },
   logging: (...msg) => {
-    logger('warn', msg[0] + '------------' + msg[1].bind)
+    logger('warn', msg[0] + '------------' + msg[1].bind, 'SQL语句')
   },
   timezone: '+08:00'
 });
