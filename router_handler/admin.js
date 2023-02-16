@@ -43,12 +43,10 @@ exports.login = (req, res) => {
       logger('info', req.body.account, '登录异常')
       res.errput('账号输入错误，请重新输入')
     } else {
-      console.log(findRes[0].password == req.body.password);
       const compareResult = bcrypt.compareSync(
         req.body.password,
         findRes[0].password
       );
-      console.log(compareResult)
       if (compareResult) {
         res.okput('登录成功！')
         logger('info', bcrypt.hashSync(req.body.password), '登录成功')

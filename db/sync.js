@@ -8,6 +8,7 @@ require('./model/recharge')
 require('./model/userCard')
 require('./model/consumeProject')
 require('./model/projectPay')
+require('./model/userProject')
 
 const sequelize = require('./index')
 

@@ -54,7 +54,7 @@ app.use("/project", projectRouter);
 app.use("/server", serverRouter);
 
 app.use((req, res, next) => {
-  res.status(404).send("not found 404");
+  res.status(404).send("你迷路了吗，快去找找管理员，问问路在何方......");
 });
 
 // 调用 app.listen 方法，指定端口号并启动web服务器
