@@ -8,4 +8,6 @@ router.post('/list', cardHandler.list)
 
 router.post("/recharge", cardHandler.recharge);
 
+router.post('/recharge/list', cardHandler.rechargeList)
+
 module.exports = router

@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../index");
 
-const UserProject = sequelize.define(
-  "userProject",
+const RechargeProject = sequelize.define(
+  "rechargeProject",
   {
     // 在这里定义模型属性
     userId: {
@@ -14,10 +14,13 @@ const UserProject = sequelize.define(
     rechargeId: {
       type: DataTypes.INTEGER,
     },
+    consumeId: {
+      type: DataTypes.INTEGER,
+    }
   },
   {
     // 这是其他模型参数
   }
 );
 
-module.exports = UserProject;
+module.exports = RechargeProject;

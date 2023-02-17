@@ -4,7 +4,12 @@ const { Op } = require("sequelize");
 const Card = require("../db/model/card");
 const UserCard = require("../db/model/userCard");
 const Recharge = require("../db/model/recharge");
-const UserProject = require("../db/model/userProject");
+const RechargeProject = require("../db/model/rechargeProject");
+const UserCardRecord = require('../db/model/userCardRecord')
+const Server = require("../db/model/server")
+const User = require("../db/model/user");
+
+require('../db/relevancy')
 
 exports.list = (req, res) => {
   Card.findAndCountAll({
@@ -25,35 +30,24 @@ exports.list = (req, res) => {
 
 exports.recharge = (req, res) => {
   const { user, card, money, serverId, remark, date, projectData } = req.body;
-  let userCardId = "";
   UserCard.findOne({ where: { userId: user, cardId: card } })
-    .then(async (findRes) => {
-      let ucHandle = null;
-      if (findRes === null) {
-        ucHandle = await UserCard.create({
+    .then(async (finducRes) => {
+      let userCardInfo = null;
+      if (finducRes === null) {
+        userCardInfo = await UserCard.create({
           userId: user,
           cardId: card,
-          balance: money,
+          balance: 0,
         });
-        userCardId = ucHandle.id;
       } else {
-        userCardId = findRes.id;
-        const balance = findRes.balance + Number(money);
-        ucHandle = await UserCard.update(
-          { balance },
-          {
-            where: {
-              id: findRes.id,
-            },
-          }
-        );
+        userCardInfo = finducRes;
       }
-      Recharge.create({ userCardId, money, serverId, remark, date })
+      Recharge.create({ userCardId: userCardInfo.id, money, serverId, remark, date })
         .then((rechargeRes) => {
           const rechargeId = rechargeRes.id;
-          const promise = projectData.map((m) => {
+          const rechargeProject = projectData.map((m) => {
             if (m) {
-              return UserProject.create({
+              return RechargeProject.create({
                 userId: user,
                 projectId: m,
                 rechargeId,
@@ -62,9 +56,19 @@ exports.recharge = (req, res) => {
               return false;
             }
           });
-          Promise.all(promise)
+          const balance = userCardInfo.balance + Number(money)
+          const userCard = UserCard.update({ balance }, { where: { id: userCardInfo.id } })
+          const userCardRecord = UserCardRecord.create({
+            userCardId: userCardInfo.id,
+            type: 1,
+            rechargeId,
+            money,
+            balance,
+            date
+          })
+          Promise.all(rechargeProject, userCard, userCardRecord)
             .then((upResArr) => {
-              res.okput("添加成功");
+              res.okput(rechargeId);
             })
             .catch((promiseErr) => seqError(promiseErr, res));
         })
@@ -72,3 +76,29 @@ exports.recharge = (req, res) => {
     })
     .catch((findErr) => seqError(findErr, res));
 };
+
+exports.rechargeList = (req, res) => {
+  Recharge.findAndCountAll({
+    where: {},
+    offset: req.body.offset,
+    limit: req.body.limit,
+    order: [[req.body.orderBy || "createdAt", "DESC"]],
+    include: [{
+      model: UserCard,
+      include: [User, Card]
+    }, Server
+    ]
+  }).then(findRes => {
+    const list = findRes.rows.map(m => {
+      const { id, date, money } = m
+      return {
+        id, date, money,
+        user: m.userCard.user.name,
+        telephone: m.userCard.user.telephone,
+        card: m.userCard.card.name,
+        server: m.server.name
+      }
+    })
+    res.okput({ total: findRes.count, list });
+  }).catch((findErr) => seqError(findErr, res));
+}
