@@ -3,16 +3,19 @@ const { logger } = require('../utils/utils')
 // sequelize连接mysql
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize('aitestdb', 'root', 'b675b7c86d787eca', {
-  host: '59.110.218.237',
-  dialect: 'mysql',
+const sequelize = new Sequelize("aitestdb", "root", "b675b7c86d787eca", {
+  host: "59.110.218.237",
+  dialect: "mysql",
+  dialectOptions: {
+    idleTimeout: 20000,
+  },
   define: {
-    freezeTableName: true
+    freezeTableName: true,
   },
   logging: (...msg) => {
-    logger('warn', msg[0] + '------------' + msg[1].bind, 'SQL语句')
+    logger("warn", msg[0] + "------------" + msg[1].bind, "SQL语句");
   },
-  timezone: '+08:00'
+  timezone: "+08:00",
 });
 
 

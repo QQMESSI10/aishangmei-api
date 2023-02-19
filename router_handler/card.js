@@ -150,7 +150,7 @@ exports.rechargeList = async (req, res) => {
     let where = {};
     if (req.body.date) {
       // moment(this.getDataValue("date")).format("YYYY-MM-DD HH:mm:ss");
-      const beginDate = new Date(req.body.date + ' 00:00:00')
+      const beginDate = new Date(req.body.date + " 00:00:00");
       const endDate = new Date(req.body.date + " 23:59:59");
       where.date = {
         [Op.between]: [beginDate, endDate],
@@ -199,3 +199,55 @@ exports.rechargeList = async (req, res) => {
     res.okput({ total: 0, list: [] });
   }
 };
+
+exports.rechargeOne = (req, res) => {
+  const projectArr = RechargeProject.findAll({
+    where: { rechargeId: req.body.id },
+  });
+  const recharge = Recharge.findOne({
+    where: {
+      id: req.body.id,
+    },
+    include: [{ model: UserCard, include: User }],
+  });
+  Promise.all([projectArr, recharge])
+    .then((resData) => {
+      const projectData = resData[0].map((m) => {
+        return m.projectId;
+      });
+      const { id, date, money, remark, serverId } = resData[1];
+      const user = resData[1].userCard.userId;
+      const card = resData[1].userCard.cardId;
+      const telephone = resData[1].userCard.user.telephone;
+      res.okput({
+        id,
+        date,
+        user,
+        card,
+        money,
+        remark,
+        serverId,
+        projectData,
+        telephone,
+      });
+    })
+    .catch((err) => seqError(err));
+};
+
+exports.rechargeEdit = (req, res) => {
+  const { id, serverId, remark, date } = req.body;
+  if (id) {
+    Recharge.update(
+      { serverId, remark, date },
+      {
+        where: { id },
+      }
+    )
+      .then(() => {
+        res.okput("修改成功");
+      })
+      .catch((updaErr) => seqError(updaErr, res));
+  } else {
+    res.errput("未知错误，请联系管理员处理");
+  }
+}
