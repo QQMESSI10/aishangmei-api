@@ -2,26 +2,39 @@ const { logger, seqError } = require('../utils/utils')
 const { Op } = require("sequelize");
 
 const User = require('../db/model/user')
+const Card = require('../db/model/card')
+const UserCard = require('../db/model/userCard')
 
 exports.add = (req, res) => {
-  User.findOne({
-    where: {
-      telephone: req.body.telephone,
-    }
-  }).then(findRes => {
-    if (findRes === null) {
-      User.create({
-        name: req.body.name,
+  if (req.body.telephone) {
+    User.findOne({
+      where: {
         telephone: req.body.telephone,
-        birthday: req.body.birthday
-      }).then(creaRes => {
-        const { createdAt, updatedAt, ...info } = creaRes.dataValues
-        res.okput(info)
-      }).catch(creaErr => seqError(creaErr, res))
-    } else {
-      res.errput('该手机号已被注册，请确认是否已注册或信息是否正确')
-    }
-  }).catch(findErr => seqError(findErr, res))
+      }
+    }).then(findRes => {
+      if (findRes === null) {
+        User.create({
+          name: req.body.name,
+          telephone: req.body.telephone,
+          birthday: req.body.birthday
+        }).then(creaRes => {
+          const { createdAt, updatedAt, ...info } = creaRes.dataValues
+          res.okput(info)
+        }).catch(creaErr => seqError(creaErr, res))
+      } else {
+        res.errput('该手机号已被注册，请确认是否已注册或信息是否正确')
+      }
+    }).catch(findErr => seqError(findErr, res))
+  } else {
+    User.create({
+      name: req.body.name,
+      telephone: req.body.telephone,
+      birthday: req.body.birthday
+    }).then(creaRes => {
+      const { createdAt, updatedAt, ...info } = creaRes.dataValues
+      res.okput(info)
+    }).catch(creaErr => seqError(creaErr, res))
+  }
 }
 
 exports.update = (req, res) => {
@@ -59,4 +72,20 @@ exports.list = (req, res) => {
   }).then(findRes => {
     res.okput({ total: findRes.count, list: findRes.rows })
   }).catch(findErr => seqError(findErr, res))
+}
+
+exports.card = (req, res) => {
+  UserCard.findAll({
+    where: {userId: req.body.userId},
+    include: [Card]
+  }).then(ucRes => {
+    const list = ucRes.map(m => {
+      return {
+        id: m.id,
+        balance: m.balance,
+        card: m.card.name
+      }
+    })
+    res.okput(list)
+  }).catch(ucErr => seqError(ucErr, res))
 }

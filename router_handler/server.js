@@ -19,3 +19,22 @@ exports.list = (req, res) => {
     res.okput({ total: findRes.count, list: findRes.rows })
   }).catch(findErr => seqError(findErr, res))
 }
+
+exports.add = (req, res) => {
+  Server.findOne({
+    where: {
+      name: req.body.name
+    }
+  }).then(findRes => {
+    if (findRes === null) {
+      Server.create({
+        name: req.body.name,
+      }).then(creaRes => {
+        const { createdAt, updatedAt, ...info } = creaRes.dataValues
+        res.okput(info)
+      }).catch(creaErr => seqError(creaErr, res))
+    } else {
+      res.errput('该服务人员已存在')
+    }
+  }).catch(findErr => seqError(findErr, res))
+}

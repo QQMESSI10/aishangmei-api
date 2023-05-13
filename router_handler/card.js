@@ -88,7 +88,6 @@ exports.recharge = (req, res) => {
 
 exports.rechargeList = async (req, res) => {
   let userCardList = null;
-  let serverList = null;
   let isEmpty = false;
   if (req.body.name || req.body.telephone) {
     await User.findAll({
@@ -129,27 +128,9 @@ exports.rechargeList = async (req, res) => {
       })
       .catch((userErr) => seqError(userErr, res));
   }
-  if (req.body.server) {
-    await Server.findAll({
-      where: {
-        name: {
-          [Op.like]: `%${req.body.server || ""}%`,
-        },
-      },
-    }).then((serRes) => {
-      if (serRes.length > 0) {
-        serverList = serRes.map((m) => {
-          return m.id;
-        });
-      } else {
-        isEmpty = true;
-      }
-    });
-  }
   if (!isEmpty) {
     let where = {};
     if (req.body.date) {
-      // moment(this.getDataValue("date")).format("YYYY-MM-DD HH:mm:ss");
       const beginDate = new Date(req.body.date + " 00:00:00");
       const endDate = new Date(req.body.date + " 23:59:59");
       where.date = {
@@ -161,10 +142,8 @@ exports.rechargeList = async (req, res) => {
         [Op.in]: userCardList,
       };
     }
-    if (serverList) {
-      where.serverId = {
-        [Op.in]: serverList,
-      };
+    if (req.body.server) {
+      where.serverId = req.body.server;
     }
     Recharge.findAndCountAll({
       where,
@@ -250,4 +229,65 @@ exports.rechargeEdit = (req, res) => {
   } else {
     res.errput("未知错误，请联系管理员处理");
   }
+}
+
+exports.userCard = (req, res) => {
+  const { userId } = req.body
+  UserCard.findAll({
+    where: { userId },
+    order: [["balance", "DESC"]],
+    include: [{ model: Card }]
+  }).then(resData => {
+    const list = resData.map(m => {
+      return {
+        id: m.id,
+        name: m.card.name,
+        discount: m.card.discount,
+        balance: m.balance,
+      }
+    })
+    res.okput(list)
+  }).catch(resErr => seqError(resErr, res))
+}
+
+exports.add = (req, res) => {
+  Card.findOne({
+    where: {
+      name: req.body.name
+    }
+  }).then(findRes => {
+    if (findRes === null) {
+      Card.create({
+        name: req.body.name,
+        discount: req.body.discount
+      }).then(creaRes => {
+        const { createdAt, updatedAt, ...info } = creaRes.dataValues
+        res.okput(info)
+      }).catch(creaErr => seqError(creaErr, res))
+    } else {
+      res.errput('该卡名已存在')
+    }
+  }).catch(findErr => seqError(findErr, res))
+}
+
+exports.userCardAdd = (req, res) => {
+  UserCard.findOne({
+    where: {
+      userId: req.body.user,
+      cardId: req.body.cardId
+    }
+  }).then(findRes => {
+    if (findRes === null) {
+      UserCard.create({
+        userId: req.body.user,
+        cardId: req.body.cardId,
+        balance: req.body.balance
+      }).then(creaRes => {
+        const { createdAt, updatedAt, ...info } = creaRes.dataValues
+        res.okput(info)
+      }).catch(creaErr => seqError(creaErr, res))
+    } else {
+      res.errput('该会员已存在该卡')
+    }
+  }).catch(findErr => seqError(findErr, res))
 }

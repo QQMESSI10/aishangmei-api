@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../index");
-
+// 充值赠送项目表
 const RechargeProject = sequelize.define(
   "rechargeProject",
   {

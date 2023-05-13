@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../index');
-
+// 卡记录表
 const UserCardRecord = sequelize.define('userCardRecord', {
   // 在这里定义模型属性
   userCardId: {

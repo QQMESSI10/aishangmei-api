@@ -46,12 +46,14 @@ const userRouter = require("./router/user")
 const cardRouter = require("./router/card")
 const projectRouter = require("./router/project")
 const serverRouter = require("./router/server")
+const consumeRouter = require("./router/consume")
 app.use("/admin", adminRouter);
 app.use("/front", frontRouter);
 app.use("/user", userRouter);
 app.use("/card", cardRouter);
 app.use("/project", projectRouter);
 app.use("/server", serverRouter);
+app.use("/consume", consumeRouter);
 
 app.use((req, res, next) => {
   res.status(404).send("你迷路了吗，快去找找管理员，问问路在何方......");

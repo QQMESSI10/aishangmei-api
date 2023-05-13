@@ -10,5 +10,7 @@ router.post('/add', userHandler.add)
 router.post('/list', userHandler.list)
 // 会员修改
 router.post('/update', userHandler.update)
+// 会员持有卡列表
+router.post('/card', userHandler.card)
 
 module.exports = router
