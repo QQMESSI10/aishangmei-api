@@ -4,6 +4,7 @@ const sequelize = require('../index');
 const ConsumeProject = sequelize.define('consumeProject', {
   consumeId: DataTypes.INTEGER,
   projectId: DataTypes.INTEGER,
+  serverId: DataTypes.INTEGER,
   money: DataTypes.FLOAT
 })
 

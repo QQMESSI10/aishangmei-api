@@ -5,7 +5,8 @@ const moment = require('moment')
 const Recharge = sequelize.define('recharge', {
   userCardId: DataTypes.INTEGER,
   money: DataTypes.FLOAT,
-  serverId: DataTypes.INTEGER,
+  realMoney: DataTypes.INTEGER,
+  serverId: DataTypes.STRING,
   remark: DataTypes.STRING,
   date: {
     type: DataTypes.DATE,

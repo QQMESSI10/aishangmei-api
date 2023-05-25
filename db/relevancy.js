@@ -17,10 +17,10 @@ User.hasOne(Consume, {
 })
 Consume.belongsTo(User)
 
-Server.hasOne(Consume, {
-  foreignKey: 'serverId'
-})
-Consume.belongsTo(Server)
+// Server.hasOne(Consume, {
+//   foreignKey: 'serverId'
+// })
+// Consume.belongsTo(Server)
 
 // ConsumeProject表
 Consume.hasOne(ConsumeProject, {
@@ -32,6 +32,11 @@ Project.hasOne(ConsumeProject, {
   foreignKey: 'projectId'
 })
 ConsumeProject.belongsTo(Project)
+
+Server.hasOne(ConsumeProject, {
+  foreignKey: 'serverId'
+})
+ConsumeProject.belongsTo(Server)
 
 // ProjectPay表
 ConsumeProject.hasOne(ProjectPay, {

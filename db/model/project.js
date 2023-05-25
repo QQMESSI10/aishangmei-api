@@ -9,6 +9,9 @@ const Project = sequelize.define('project', {
   remark: {
     type: DataTypes.STRING,
   },
+  type: {   // 0：打折  1：不打折
+    type: DataTypes.INTEGER,
+  }
 }, {
   // 这是其他模型参数
 });

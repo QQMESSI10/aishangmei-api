@@ -11,10 +11,9 @@ const Project = require("../db/model/project")
 const Server = require("../db/model/server")
 
 exports.add = (req, res) => {
-  const { user, server, remark, date, project } = req.body
+  const { user, remark, date, project } = req.body
   Consume.create({
     userId: user,
-    serverId: server,
     remark,
     date
   }).then(consume => {
@@ -25,6 +24,7 @@ exports.add = (req, res) => {
         ConsumeProject.create({
           consumeId,
           projectId: e.project,
+          serverId: e.server,
           money: e.money
         }).then(cp => {
           const consumeProjectId = cp.id

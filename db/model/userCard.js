@@ -10,8 +10,11 @@ const UserCard = sequelize.define('userCard', {
     type: DataTypes.INTEGER,
   },
   balance: {
-    type: DataTypes.FLOAT,
+    type: DataTypes.INTEGER,
   },
+  expiryDate: {
+    type: DataTypes.DATEONLY,
+  }
 }, {
   // 这是其他模型参数
 });

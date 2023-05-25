@@ -8,6 +8,7 @@ const RechargeProject = require("../db/model/rechargeProject");
 const UserCardRecord = require("../db/model/userCardRecord");
 const Server = require("../db/model/server");
 const User = require("../db/model/user");
+const Project = require("../db/model/project")
 
 require("../db/relevancy");
 
@@ -29,7 +30,7 @@ exports.list = (req, res) => {
 };
 
 exports.recharge = (req, res) => {
-  const { user, card, money, serverId, remark, date, projectData } = req.body;
+  const { user, card, money, serverId, remark, date, projectData, realMoney } = req.body;
   UserCard.findOne({ where: { userId: user, cardId: card } })
     .then(async (finducRes) => {
       let userCardInfo = null;
@@ -47,6 +48,7 @@ exports.recharge = (req, res) => {
         money,
         serverId,
         remark,
+        realMoney,
         date,
       })
         .then((rechargeRes) => {
@@ -62,7 +64,7 @@ exports.recharge = (req, res) => {
               return false;
             }
           });
-          const balance = userCardInfo.balance + Number(money);
+          const balance = userCardInfo.balance + Number(realMoney);
           const userCard = UserCard.update(
             { balance },
             { where: { id: userCardInfo.id } }
@@ -71,7 +73,7 @@ exports.recharge = (req, res) => {
             userCardId: userCardInfo.id,
             type: 1,
             rechargeId,
-            money,
+            money: realMoney,
             balance,
             date,
           });
@@ -233,22 +235,39 @@ exports.rechargeEdit = (req, res) => {
 
 exports.userCard = (req, res) => {
   const { userId } = req.body
-  UserCard.findAll({
+  let list = []
+  const rechargeProject = RechargeProject.findAll({
+    where: { userId },
+    include: [Project]
+  })
+  const userCard = UserCard.findAll({
     where: { userId },
     order: [["balance", "DESC"]],
     include: [{ model: Card }]
-  }).then(resData => {
-    const list = resData.map(m => {
+  })
+  Promise.all([rechargeProject, userCard]).then(resArr => {
+    list = resArr[0].map(m => {
+      return {
+        id: ';'+m.id,
+        cardType: 5,
+        projectId: m.projectId,
+        name: '赠送的' + m.project.name
+      }
+    })
+    const validData = resArr[1].filter(f => f.balance > 0)
+    list = list.concat(validData.map(m => {
       return {
         id: m.id,
         name: m.card.name,
-        discount: m.card.discount,
+        params: JSON.parse(m.card.params),
+        cardType: m.card.type,
         balance: m.balance,
       }
-    })
+    }))
     res.okput(list)
   }).catch(resErr => seqError(resErr, res))
 }
+
 
 exports.add = (req, res) => {
   Card.findOne({

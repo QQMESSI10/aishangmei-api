@@ -6,9 +6,6 @@ const Card = sequelize.define('card', {
   name: {
     type: DataTypes.STRING,
   },
-  discount: {
-    type: DataTypes.FLOAT
-  },
   remark: {
     type: DataTypes.STRING,
   },
@@ -17,6 +14,21 @@ const Card = sequelize.define('card', {
   },
   endDate: {
     type: DataTypes.DATEONLY
+  },
+  // 1:充值增额卡 2：充值打折卡 3：充值增额打折卡 4：次卡
+  type: {
+    type: DataTypes.INTEGER,
+  },
+  // params根据type：
+  //      1：[赠送基数，赠送额度],
+  //      2：[折扣力度],
+  //      3：[赠送基数，赠送额度，折扣力度],
+  //      4：[项目id，次数]
+  params: {
+    type: DataTypes.STRING
+  },
+  expiryDays: {
+    type: DataTypes.INTEGER
   }
 }, {
   // 这是其他模型参数

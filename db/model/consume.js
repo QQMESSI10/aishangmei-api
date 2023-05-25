@@ -4,7 +4,6 @@ const moment = require('moment')
 
 const Consume = sequelize.define('consume', {
   userId: DataTypes.INTEGER,
-  serverId: DataTypes.INTEGER,
   remark: DataTypes.STRING,
   date: {
     type: DataTypes.DATE,
