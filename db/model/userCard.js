@@ -16,6 +16,7 @@ const UserCard = sequelize.define('userCard', {
     type: DataTypes.DATEONLY,
   }
 }, {
+  version: true
   // 这是其他模型参数
 });
 

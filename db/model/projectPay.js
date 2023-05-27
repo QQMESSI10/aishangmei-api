@@ -4,7 +4,8 @@ const sequelize = require('../index');
 const ProjectPay = sequelize.define('projectPay', {
   consumeProjectId: DataTypes.INTEGER,
   userCardId: DataTypes.INTEGER,
-  money: DataTypes.FLOAT
+  money: DataTypes.FLOAT,
+  type: DataTypes.INTEGER,
 })
 
 module.exports = ProjectPay

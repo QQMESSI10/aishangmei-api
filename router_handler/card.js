@@ -1,5 +1,6 @@
 const { logger, seqError } = require("../utils/utils");
 const { Op } = require("sequelize");
+const moment = require('moment')
 
 const Card = require("../db/model/card");
 const UserCard = require("../db/model/userCard");
@@ -13,11 +14,18 @@ const Project = require("../db/model/project")
 require("../db/relevancy");
 
 exports.list = (req, res) => {
+  let nowDate = moment(new Date()).format('YYYY-MM-DD')
   Card.findAndCountAll({
     where: {
       name: {
         [Op.like]: `%${req.body.name || ""}%`,
       },
+      beginDate: {
+        [Op.lte]: nowDate
+      },
+      endDate: {
+        [Op.gte]: nowDate
+      }
     },
     offset: req.body.offset,
     limit: req.body.limit,
@@ -57,8 +65,9 @@ exports.recharge = (req, res) => {
             if (m) {
               return RechargeProject.create({
                 userId: user,
-                projectId: m,
+                projectId: m.projectId,
                 rechargeId,
+                expiryDate: m.expiryDate
               });
             } else {
               return false;
@@ -194,7 +203,10 @@ exports.rechargeOne = (req, res) => {
   Promise.all([projectArr, recharge])
     .then((resData) => {
       const projectData = resData[0].map((m) => {
-        return m.projectId;
+        return {
+          projectId: m.projectId,
+          expiryDate: m.expiryDate
+        };
       });
       const { id, date, money, remark, serverId } = resData[1];
       const user = resData[1].userCard.userId;
@@ -235,9 +247,13 @@ exports.rechargeEdit = (req, res) => {
 
 exports.userCard = (req, res) => {
   const { userId } = req.body
+  const consumeId = req.body.consumeId || null
   let list = []
   const rechargeProject = RechargeProject.findAll({
-    where: { userId },
+    where: { 
+      userId,
+      consumeId
+    },
     include: [Project]
   })
   const userCard = UserCard.findAll({
@@ -248,10 +264,11 @@ exports.userCard = (req, res) => {
   Promise.all([rechargeProject, userCard]).then(resArr => {
     list = resArr[0].map(m => {
       return {
-        id: ';'+m.id,
+        id: m.id+';',
         cardType: 5,
         projectId: m.projectId,
-        name: '赠送的' + m.project.name
+        name: '赠送的' + m.project.name,
+        expiryDate: m.expiryDate
       }
     })
     const validData = resArr[1].filter(f => f.balance > 0)
@@ -262,6 +279,7 @@ exports.userCard = (req, res) => {
         params: JSON.parse(m.card.params),
         cardType: m.card.type,
         balance: m.balance,
+        expiryDate: m.expiryDate
       }
     }))
     res.okput(list)

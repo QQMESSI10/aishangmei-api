@@ -8,7 +8,8 @@ const UserCard = require("../db/model/userCard")
 const UserCardRecord = require("../db/model/userCardRecord")
 const User = require("../db/model/user")
 const Project = require("../db/model/project")
-const Server = require("../db/model/server")
+const Server = require("../db/model/server");
+const RechargeProject = require('../db/model/rechargeProject');
 
 exports.add = (req, res) => {
   const { user, remark, date, project } = req.body
@@ -18,44 +19,73 @@ exports.add = (req, res) => {
     date
   }).then(consume => {
     const consumeId = consume.id
-    let promiseArr = []
-    project.forEach(e => {
-      promiseArr.push(
-        ConsumeProject.create({
-          consumeId,
-          projectId: e.project,
-          serverId: e.server,
-          money: e.money
-        }).then(cp => {
-          const consumeProjectId = cp.id
-          e.payArr.forEach(async pay => {
-            await ProjectPay.create({
-              consumeProjectId,
-              userCardId: pay.payType == -1 ? null : pay.payType,
-              money: pay.realMoney,
-            }).catch((ppErr) => seqError(ppErr, res));
-            if (pay.payType != -1) {
-              await UserCard.findOne({where: { id: pay.payType }}).then(async ucFind => {
-                const balance = ucFind.balance - pay.realMoney
-                await UserCard.update({balance}, {where: {id: pay.payType}}).catch((ucUpErr) => seqError(ucUpErr, res));
-                await UserCardRecord.create({
-                  userCardId: pay.payType,
-                  type: 0,
-                  consumeId,
-                  money: pay.realMoney,
-                  balance,
-                  date
-                }).catch((ucrErr) => seqError(ucrErr, res));
-              }).catch((ucErr) => seqError(ucErr, res));
-            }
+    let promiseArr = project.map(async (m) => {
+      const projectInsert = await ConsumeProject.create({
+        consumeId,
+        projectId: m.project,
+        serverId: m.server,
+        money: m.money
+      }).then(async (cp) => {
+        const consumeProjectId = cp.id
+        let payPromise = m.payArr.map(async (pm) => {
+          let promiseList = []
+          let userCardId = null
+          if (pm.pay.cardType == 5) {
+            userCardId = Number(pm.pay.id.split(';')[0])
+          } else {
+            userCardId = pm.pay.id
+          }
+          // 项目支付表
+          const ppCreate = ProjectPay.create({
+            consumeProjectId,
+            type: pm.pay.cardType,
+            userCardId,
+            money: pm.money
           })
-        }).catch((cpErr) => seqError(cpErr, res))
-      )
+          promiseList.push(ppCreate)
+          return Promise.all(promiseList).catch((ucErr) => seqError(ucErr, res))
+        })
+        return Promise.all(payPromise)
+      })
+      return Promise.all(projectInsert)
     })
-    Promise.all(promiseArr).then(() => {
+    async function balanceUpdate() {
+      for(let i=0; i<project.length; i++) {
+        for(let j=0; j<project[i].payArr.length; j++) {
+          let userCardId = null
+          let pm = project[i].payArr[j]
+          if (pm.pay.cardType == 5) {
+            userCardId = Number(pm.pay.id.split(';')[0])
+          } else {
+            userCardId = pm.pay.id
+          }
+          if (pm.pay.cardType == 5) {
+            await RechargeProject.findOne({where: {id: userCardId}}).then(async rpFind => {
+              await RechargeProject.update({consumeId}, {where: {id: userCardId}})
+            })
+          } else if (userCardId != 0) {
+            await UserCard.findOne({where: {id: userCardId}}).then(async ucFind => {
+              let money = pm.realMoney || pm.money || 1
+              let balance = ucFind.balance - money
+              await UserCard.update({balance}, {where: {id: userCardId}})
+              await UserCardRecord.create({
+                userCardId,
+                type: 0,
+                consumeId,
+                money: pm.realMoney || pm.money || 1,
+                balance,
+                date
+              })
+            })
+          }
+        }
+      } 
+    }
+    Promise.all(promiseArr).then(async (successArr) => {
+      await balanceUpdate()
       res.okput(consumeId);
-    })
-  }).catch((consumeErr) => seqError(consumeErr, res));
+    }).catch((promiseErr) => seqError(promiseErr, res))
+  }).catch((consumeErr) => seqError(consumeErr, res))
 },
 
 exports.list = async (req, res) => {
@@ -107,7 +137,6 @@ exports.list = async (req, res) => {
       order: [[req.body.orderBy || "createdAt", "DESC"]],
       include: [
         User,
-        Server,
       ]
     }).then(findRes => {
       let proArr = []
@@ -120,7 +149,7 @@ exports.list = async (req, res) => {
             where: {
               consumeId: e.id
             },
-            include: [Project]
+            include: [Project, Server]
           })
           promiseArr.push(consumeProject)
           await Promise.all(promiseArr).then(proRes => {
@@ -128,7 +157,8 @@ exports.list = async (req, res) => {
               pro.forEach(project => {
                 e.project.push({
                   money: project.money,
-                  name: project.project.name
+                  name: project.project.name,
+                  server: project.server.name
                 })
               })
             })
@@ -144,7 +174,6 @@ exports.list = async (req, res) => {
             date,
             user: m.user.name,
             telephone: m.user.telephone,
-            server: m.server.name,
             project: m.project
           };
         });
@@ -154,4 +183,57 @@ exports.list = async (req, res) => {
   } else {
     res.okput({ total: 0, list: [] });
   }
+}
+
+exports.consumeOne = (req, res) => {
+  const consumeInfo = Consume.findOne({where: {id: req.body.id}, include: [User]})
+  const projectInfo = new Promise(async (resolve, reject) => {
+    await ConsumeProject.findAll({where: {consumeId: req.body.id}, include: [Project]}).then(async cp => {
+      for(let i=0; i<cp.length; i++)
+      await ProjectPay.findAll({where: {consumeProjectId: cp[i].id}}).then(pp => {
+        cp[i].payArr = pp
+      })
+      const projectData = cp.map(cpm => {
+        return {
+          consumeProjectId: cpm.id,
+          project: cpm.projectId,
+          money: cpm.money,
+          server: cpm.serverId,
+          payArr: cpm.payArr.map(m => {
+            return {
+              payId: m.type == 5 ? m.userCardId+';' : m.userCardId,
+              money: m.money,
+              type: m.type
+            }
+          })
+        }
+      })
+      resolve(projectData)
+    })
+  })
+  Promise.all([consumeInfo, projectInfo]).then(findArr => {
+    let resData = {
+      info: {
+        id: findArr[0].id,
+        user: findArr[0].userId,
+        date: findArr[0].date,
+        telephone: findArr[0].user.telephone,
+        remark: findArr[0].remark,
+      },
+      projectArr: findArr[1]
+    }
+    res.okput(resData);
+  }).catch((findErr) => seqError(findErr, res))
+}
+
+exports.edit = (req, res) => {
+  const { id, remark, date, project } = req.body 
+  let promiseArr = []
+  promiseArr.push(Consume.update({date, remark}, {where: {id}}))
+  project.forEach(e => {
+    promiseArr.push(ConsumeProject.update({serverId: e.serverId}, {where: {id: e.consumeProjectId}}))
+  })
+  Promise.all(promiseArr).then(() => {
+    res.okput("修改成功");
+  }).catch((updaErr) => seqError(updaErr, res));
 }

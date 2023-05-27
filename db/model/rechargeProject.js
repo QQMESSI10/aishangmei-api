@@ -16,6 +16,9 @@ const RechargeProject = sequelize.define(
     },
     consumeId: {
       type: DataTypes.INTEGER,
+    },
+    expiryDate: {
+      type: DataTypes.DATEONLY,
     }
   },
   {
